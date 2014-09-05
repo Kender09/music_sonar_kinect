@@ -6,8 +6,9 @@ SoundCipher backMusic1;
 
 final int canvasWidth = 512;
 final int canvasHeight = 512;
-final int halfWidth = canvasWidth/2;
-final int halfHeight = canvasHeight/2;
+final int userPosX = canvasWidth/2;
+final int userPosY = canvasHeight;
+final int maxDistance = (int)dist(userPosX, userPosY, 0, 0);
 final int setFrameRate = 60;
 int countSonar = 0;
 int objectCount = 0;
@@ -52,8 +53,8 @@ void setup() {
     colorMode(HSB, 255);
     background(255);
 
-    objects[0] = new SensedObject(100, halfHeight);
-    objects[1] = new SensedObject(halfWidth, 350);
+    objects[0] = new SensedObject(100, height/2);
+    objects[1] = new SensedObject(width/2, 350);
     frameRate(setFrameRate);
 }
 
@@ -74,7 +75,7 @@ void fadeToWhite() {
 }
 
 void sonarWrite() {
-    countSonar = countSonar % (setFrameRate*3);
+    countSonar = countSonar % (setFrameRate*5);
     if(countSonar == 0){
         for (int c = 0; c < objectCount; ++c) {
             objects[c].flag = 0;
@@ -84,7 +85,7 @@ void sonarWrite() {
     countSonar++;
     stroke(50, 100, 100);
     strokeWeight(0.8);
-    ellipse(halfWidth, halfHeight, sonarRadius, sonarRadius);
+    ellipse(userPosX, userPosY, sonarRadius, sonarRadius);
 }
 
 void drawObjects() {
@@ -97,7 +98,7 @@ void drawObjects() {
             float col = calculationDgrees(objects[c].preXpos, objects[c].preYpos);
             col = 255*col/360;
             float transparency = centerDistance(objects[c].preXpos, objects[c].preYpos);
-            transparency = 255 - 150*transparency/halfWidth;
+            transparency = 255 - 150*transparency/maxDistance;
             fill(col, 200, 200, transparency);
             ellipse(objects[c].preXpos, objects[c].preYpos, 10, 10);
         }
@@ -122,20 +123,20 @@ void emissionObject() {
 }
 
 float centerDistance(float x, float y) {
-    return dist(halfWidth, halfHeight, x, y);
+    return dist(userPosX, userPosY, x, y);
 }
 
 float calculationDgrees(float x, float y) {
-    return abs(degrees(atan2(y-halfHeight, x-halfWidth)));
+    return abs(degrees(atan2(y-userPosY, x-userPosX)));
 }
 
 void collisionSound(float x, float y, int c) {
     float range = centerDistance(x, y);
-    float pitch = calculationDgrees(x, y);
-    pitch = 30*pitch/360 + 62;
+    float angle = calculationDgrees(x, y);
+    float pitch = 90 - 100*angle/360;
     println(pitch);
-    float dynamic = 127 - (range/halfWidth)*50;
-    float pan = 64 + (((x-(halfWidth))/halfWidth)*64);
+    float dynamic = 127 - (range/maxDistance)*120;
+    float pan = 127 - (angle/360)*127;
     hitSounds[c].playNote(
         0,
         0,
@@ -148,13 +149,21 @@ void collisionSound(float x, float y, int c) {
     );
 }
 
+int amountX = 1;
+int amountY = 1;
 void moveObject() {
     for (int c = 0; c < objectCount; ++c) {
         if(c%2 == 0){
-            objects[c].xPos = (objects[c].xPos + 1) % width;
+            if(objects[c].xPos > width || objects[c].xPos < 0){
+                amountX = amountX*(-1);
+            }
+            objects[c].xPos = objects[c].xPos + amountX;
         }
         if(c%2 == 1){
-            objects[c].yPos = (objects[c].yPos + 1) % height;
+            if(objects[c].yPos > height || objects[c].yPos < 0){
+                amountY = amountY*(-1);
+            }
+            objects[c].yPos = objects[c].yPos + amountY;
         }
     }
 }
