@@ -1,12 +1,13 @@
 import arb.soundcipher.*;
+import SimpleOpenNI.*;
 
-final int canvasWidth = 512;
-final int canvasHeight = 512;
+final int canvasWidth = 640;
+final int canvasHeight = 480;
 final int userPosX = canvasWidth/2;
 final int userPosY = canvasHeight;
 final int maxDistance = (int)dist(userPosX, userPosY, 0, 0);
 final int setFrameRate = 60;
-final int maxObject = 5;
+final int maxObject = 4;
 int countSonar = 0;
 int objectCount = 0;
 float sonarRadius;
@@ -15,6 +16,11 @@ SoundCipher[] hitSounds;
 SoundCipher backMusic1;
 
 SensedObject[] objects;
+LineWave lineWave;
+
+SimpleOpenNI simpleOpenNI;
+//kinectの取得できるピクセル(640,480)
+//depthMap
 
 class SensedObject {
   float posX, posY, prePosX, prePosY;
@@ -33,11 +39,13 @@ class SensedObject {
 
 void setup() {
     size(canvasWidth, canvasHeight);
+    colorMode(HSB, 255);
+    background(255);
 
-    hitSounds = new SoundCipher[maxObject];
+   hitSounds = new SoundCipher[maxObject];
     for(int c = 0; c < maxObject; ++c){
         hitSounds[c] = new SoundCipher(this);
-    }
+    } 
 
     // backMusic1 = new SoundCipher(this);
     // backMusic1.tempo(80);
@@ -52,28 +60,34 @@ void setup() {
     // }
     //backMusic1.playPhrase(pitches, dynamics, durations);
 
-    colorMode(HSB, 255);
-    background(255);
-    
-    objects = new SensedObject[maxObject];
-    objects[0] = new SensedObject(100, height/2);
-    objects[1] = new SensedObject(width/2, 350);
-    objects[2] = new SensedObject(width/2, height/2);
+    simpleOpenNI = new SimpleOpenNI(this);
+    simpleOpenNI.enableDepth();
+    lineWave = new LineWave(simpleOpenNI, hitSounds);
+
+    // objects = new SensedObject[maxObject];
+    // objects[0] = new SensedObject(100, height/2);
+    // objects[1] = new SensedObject(width/2, 350);
+    // objects[2] = new SensedObject(width/2, height/2);
+
     frameRate(setFrameRate);
 }
 
 void draw() {
-    fadeToWhite();
-    sonarWrite();
-    drawObjects();
-    emissionObject();
+    // sonarWrite();
+    // drawObjects();
+    // emissionObject();
+    update();
+}
 
-    moveObject();
+void update() {
+    fadeToWhite();
+    // moveObject();
+    lineWave.update(lineWave.simpleOpenNI, lineWave.depthValues);
 }
 
 void fadeToWhite() {
     noStroke();
-    fill(255, 100);
+    fill(255, 200);
     rectMode(CORNER);
     rect(0, 0, width, height);
 }
@@ -111,10 +125,6 @@ void drawObjects() {
             ellipse(objects[c].prePosX, objects[c].prePosY, 10, 10);
         }
     } 
-}
-
-void detectionObject() {
-
 }
 
 void emissionObject() {
@@ -158,6 +168,9 @@ void collisionSound(float x, float y, int c) {
     );
 }
 
+void attenuationSound() {
+
+}
 
 
 float amount0 = 1;
@@ -203,5 +216,4 @@ int bound(float x, float y) {
     }
     return ans; 
 }
-
 
