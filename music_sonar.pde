@@ -3,38 +3,31 @@ import SimpleOpenNI.*;
 
 final int canvasWidth = 640;
 final int canvasHeight = 480;
-final int userPosX = canvasWidth/2;
-final int userPosY = canvasHeight;
-final int maxDistance = (int)dist(userPosX, userPosY, 0, 0);
 final int setFrameRate = 60;
 final int maxObject = 4;
-int countSonar = 0;
-int objectCount = 0;
-float sonarRadius;
 
-SoundCipher[] hitSounds;
-SoundCipher backMusic1;
+// SensedObject[] objects;
+TestObject[] objects;
 
-SensedObject[] objects;
+SoundCipher[] sounds;
+// SoundCipher backMusic1;
+
 LineWave lineWave;
+SonarWave sonarWave;
 
 SimpleOpenNI simpleOpenNI;
 //kinectの取得できるピクセル(640,480)
 //depthMap
 
-class SensedObject {
-  float posX, posY, prePosX, prePosY;
-  int flag, objectTime;
+int modeNum = 0;
 
-    SensedObject (float x, float y) {
-    posX = x;
-    posY = y;
-    prePosX = x;
-    prePosY = y;
-    flag = 0;
-    objectTime = 0;
-    objectCount++;
-  }
+class TestObject {
+    float x, y;
+
+    TestObject (float x, float y) {
+        this.x = x;
+        this.y = y;
+    }
 };
 
 void setup() {
@@ -42,9 +35,9 @@ void setup() {
     colorMode(HSB, 255);
     background(255);
 
-   hitSounds = new SoundCipher[maxObject];
+   sounds = new SoundCipher[maxObject];
     for(int c = 0; c < maxObject; ++c){
-        hitSounds[c] = new SoundCipher(this);
+        sounds[c] = new SoundCipher(this);
     } 
 
     // backMusic1 = new SoundCipher(this);
@@ -62,27 +55,29 @@ void setup() {
 
     simpleOpenNI = new SimpleOpenNI(this);
     simpleOpenNI.enableDepth();
-    lineWave = new LineWave(simpleOpenNI, hitSounds);
+    lineWave = new LineWave(simpleOpenNI, sounds);
 
-    // objects = new SensedObject[maxObject];
-    // objects[0] = new SensedObject(100, height/2);
-    // objects[1] = new SensedObject(width/2, 350);
-    // objects[2] = new SensedObject(width/2, height/2);
+    objects = new TestObject[maxObject];
+    objects[0] = new TestObject(100, height/2);
+    objects[1] = new TestObject(width/2, 350);
+    objects[2] = new TestObject(width/2, height/2);
+    sonarWave = new SonarWave(sounds, objects);
 
     frameRate(setFrameRate);
 }
 
 void draw() {
-    // sonarWrite();
-    // drawObjects();
-    // emissionObject();
     update();
 }
 
 void update() {
     fadeToWhite();
-    // moveObject();
-    lineWave.update(lineWave.simpleOpenNI, lineWave.depthValues);
+    if(modeNum == 1){
+        lineWave.update();
+        return;
+    }
+    moveObject();
+    sonarWave.update(objects);
 }
 
 void fadeToWhite() {
@@ -92,115 +87,53 @@ void fadeToWhite() {
     rect(0, 0, width, height);
 }
 
-void sonarWrite() {
-    countSonar = countSonar % (setFrameRate*5);
-    if(countSonar == 0){
-        for (int c = 0; c < objectCount; ++c) {
-            objects[c].flag = 0;
-        }
-    }
-    sonarRadius = countSonar * 4;
-    countSonar++;
-    stroke(50, 100, 100);
-    strokeWeight(0.8);
-    ellipse(userPosX, userPosY, sonarRadius, sonarRadius);
-}
-
-void drawObjects() {
-    noStroke();
-    float col = 0.0;
-    float transparency = 0.0;
-    for (int c = 0; c < objectCount; ++c) {
-        fill(0, 100, 0, 100);
-        ellipse(objects[c].posX, objects[c].posY, 10, 10);
-    
-        if(objects[c].flag == 1){
-            objects[c].objectTime++;
-            col = calculationDgrees(objects[c].prePosX, objects[c].prePosY);
-            col = 255*col/360;
-            transparency = centerDistance(objects[c].prePosX, objects[c].prePosY);
-            transparency = 255 - 150*transparency/maxDistance;
-            transparency = transparency - objects[c].objectTime;
-            fill(col, 200, 200, transparency);
-            ellipse(objects[c].prePosX, objects[c].prePosY, 10, 10);
-        }
-    } 
-}
-
-void emissionObject() {
-    color col;
-    for (int c = 0; c < objectCount; ++c) {
-        col = get((int)objects[c].posX, (int)objects[c].posY);
-        if(col == 8289918 && objects[c].flag == 0){
-            objects[c].flag =1;
-            objects[c].prePosX = objects[c].posX;
-            objects[c].prePosY = objects[c].posY;
-            objects[c].objectTime = 0;
-            collisionSound(objects[c].prePosX, objects[c].prePosY,c);
-        }
+void keyPressed() {
+    if(key == 'c' || key == 'C'){
+        modeNum = (modeNum + 1 ) % 2;
+    }else if(key == 'e' || key == 'E'){
+        noLoop();
+        exit();
     }
 }
 
-float centerDistance(float x, float y) {
-    return dist(userPosX, userPosY, x, y);
-}
-
-float calculationDgrees(float x, float y) {
-    return abs(degrees(atan2(y-userPosY, x-userPosX)));
-}
-
-void collisionSound(float x, float y, int c) {
-    float range = centerDistance(x, y);
-    float angle = calculationDgrees(x, y);
-    float pitch = 90 - 100*angle/360;
-    println(pitch);
-    float dynamic = 127 - (range/maxDistance)*120;
-    float pan = 127 - (angle/360)*127;
-    hitSounds[c].playNote(
-        0,
-        0,
-        0,
-        pitch,
-        dynamic,
-        100,
-        0.8,
-        pan
-    );
-}
-
-void attenuationSound() {
-
+void exit() {
+    for(int c = 0; c < maxObject; ++c){
+        sounds[c].stop();
+    }
+    println("EXIT");
+    super.exit();
 }
 
 
+//test用
 float amount0 = 1;
 float amount1 = 0.5;
 float amount2X = 0.5;
 float amount2Y = 0.5;
 void moveObject() {
-    for (int c = 0; c < objectCount; ++c) {
+    for (int c = 0; c < 3; ++c) {
         switch (c%maxObject) {
             case 0:
-                if(objects[c].posX > width || objects[c].posX < 0){
+                if(objects[c].x > width || objects[c].x < 0){
                     amount0 = amount0*(-1);
                 }
-                objects[c].posX = objects[c].posX + amount0;
+                objects[c].x = objects[c].x + amount0;
             break;
             case 1:
-                if(objects[c].posY > height || objects[c].posY < 0){
+                if(objects[c].y > height || objects[c].y < 0){
                     amount1 = amount1*(-1);
                 }
-                objects[c].posY = objects[c].posY + amount1;
+                objects[c].y = objects[c].y + amount1;
             break;
             case 2:
-                if(objects[c].posX > width || objects[c].posX < 0){
+                if(objects[c].x > width || objects[c].x < 0){
                     amount2X = amount2X*(-1);
                 }
-                objects[c].posX = objects[c].posX + amount2X;
-                if(objects[c].posY > height || objects[c].posY < 0){
+                objects[c].x = objects[c].x + amount2X;
+                if(objects[c].y > height || objects[c].y < 0){
                     amount2Y = amount2Y*(-1);
                 }
-                objects[c].posY = objects[c].posY + amount2Y;
+                objects[c].y = objects[c].y + amount2Y;
             break;    
         }
     }
