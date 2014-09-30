@@ -14,14 +14,14 @@ class LineWave{
 
     SoundCipher[] lineSounds;
 
-    LineWave(SimpleOpenNI simpleOpenNI, SoundCipher[] lineSounds){
+    LineWave(SimpleOpenNI simpleOpenNI, SoundCipher[] lineSounds) {
         this.simpleOpenNI = simpleOpenNI;
         this.depthValues = simpleOpenNI.depthMap();
         lines = new float[maxValue+1];
         for(int c = 0; c <= maxValue; ++c){
         	lines[c] = 0.0;
  	    }
- 	    useValues = new int[maxValue+1];
+ 	    useValues = new int[maxValue + 1];
         for(int c = 0; c <= maxValue; ++c){
         	useValues[c] = 0;
  	    }
@@ -29,7 +29,7 @@ class LineWave{
  	    this.lineSounds = lineSounds;
     }
 
-    void update(SimpleOpenNI simpleOpenNI, int[] depthValues){
+    void update(SimpleOpenNI simpleOpenNI, int[] depthValues) {
     	simpleOpenNI.update();
     	countFrame = countFrame%60;
     	if(countFrame%5 == 0){
@@ -40,21 +40,29 @@ class LineWave{
     	countFrame++;
     }
 
-    void updateDepthValues(SimpleOpenNI simpleOpenNI, int[] depthValues){
+    void updateDepthValues(SimpleOpenNI simpleOpenNI, int[] depthValues) {
     	depthValues = simpleOpenNI.depthMap();
     	float lineLengthR = 0.0;
     	float lineLengthL = 0.0;
-    	int getPosition = 0;
+    	int getPosition[] = new int[5];
     	int elementNumberR;
     	int elementNumberL;
-    	countWave = countWave % (width/2);
+    	countWave = countWave % (width/2 - congestion);
 
     	// for (int i = 1; i <= maxValue; ++i) {
     	// 	useValues[i] += constrain(depthValues[i + (640*height/2)],  0, 4000);
     	// }
 
-	    getPosition = width/2 + (countWave+1) + (640*height/2);
-	    lineLengthR = depthValues[getPosition];
+    	//右側
+	    getPosition[0] = width/2 + (countWave+1) + (640*height/2);
+	    getPosition[1] = width/2 + 1 + (countWave+1) + (640*height/2);
+	    getPosition[2] = width/2 - 1 + (countWave+1) + (640*height/2);
+	    getPosition[3] = width/2 + (countWave+1) + (640*(height/2 + 1));
+	    getPosition[4] = width/2 + (countWave+1) + (640*(height/2 - 1));
+	    for (int i = 0; i < 5; ++i) {
+			lineLengthR += depthValues[getPosition[i]];	    	
+	    }
+	    lineLengthR = lineLengthR/5;
 	    elementNumberR = (width/2)/congestion + (countWave/congestion+1);
 	    // lineLengthR = useValues[elementNumberR]/(maxValue/2);
 	    // useValues[elementNumberR] = 0;
@@ -63,8 +71,16 @@ class LineWave{
 	    //line(width/2 + (countWave+1), height - 5, width/2 + (countWave+1), lineLength);
 	    //collisionSound(lineLength, elementNumber, 0);
 
-	    getPosition = width/2 - (countWave+1) + (640*height/2);
-	    lineLengthL = depthValues[getPosition];
+	    //左側
+	    getPosition[0] = width/2 - (countWave+1) + (640*height/2);
+	    getPosition[1] = width/2 + 1 - (countWave+1) + (640*height/2);
+	    getPosition[2] = width/2 - 1 - (countWave+1) + (640*height/2);
+	    getPosition[3] = width/2 - (countWave+1) + (640*(height/2 + 1));
+	    getPosition[4] = width/2 - (countWave+1) + (640*(height/2 - 1));
+	    for (int i = 0; i < 5; ++i) {
+			lineLengthL += depthValues[getPosition[i]];	    	
+	    }
+	    lineLengthL = lineLengthL/5;
 	    elementNumberL = (width/2)/congestion - (countWave/congestion+1);
 	    // lineLengthL = useValues[elementNumberL]/(maxValue/2);
 	    // useValues[elementNumberL] = 0;
@@ -76,7 +92,7 @@ class LineWave{
 	    countWave = countWave + congestion;
     }
 
-    void drawWave(){
+    void drawWave() {
     	stroke(50, 100, 100);
 	 	strokeWeight(0.8);
  	    for(int c = 1; c <= maxValue; ++c){
@@ -85,16 +101,16 @@ class LineWave{
  	    
     }
 
-    void decrease(){
+    void decrease() {
     	 for(int c = 1; c <= maxValue; ++c){
- 	    	lines[c] = lines[c]* 0.98;
+ 	    	lines[c] = lines[c] * 0.98;
  	    	if(lines[c] < 0){
  	    		lines[c] = 0;
  	    	}
  	    }
     }
 
-    void collisionSound(float lR, float xR,float lL, float xL, int c){
+    void collisionSound(float lR, float xR,float lL, float xL, int c) {
     	double dynamic[] = new double[2];
     	double pan[] = new double[2];
     	double pitch[] = new double[2];
