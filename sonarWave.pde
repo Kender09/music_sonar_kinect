@@ -1,6 +1,6 @@
 
 class SonarWave {
-    final int userPosX = width / 2;
+    final int userPosX = width / 4;
     final int userPosY = height;
     final int maxDistance = (int)dist(userPosX, userPosY, 0, 0);
 
@@ -11,18 +11,32 @@ class SonarWave {
 
     SensedObject[] objects;
 
-    SonarWave(SoundCipher[] hitSounds, TestObject[] objects) {
+    SonarWave(SoundCipher[] hitSounds, TestObject[] objects, int objectCount, int maxObject) {
         countSonar = 0;
-        objectCount = 3;
+        this.objectCount = objectCount;
         this.hitSounds = hitSounds;
-        this.objects = new SensedObject[objectCount];
-        for (int c = 0; c < objectCount; ++c) {
+        this.objects = new SensedObject[maxObject];
+        for (int c = 0; c < this.objectCount; ++c) {
             this.objects[c] = new SensedObject(objects[c].x, objects[c].y);
         }
     }
 
-    void update(TestObject[] objects) {
-        for (int c = 0; c < objectCount; ++c) {
+    void update(TestObject[] objects, int objectCount) {
+        println("test: " + objectCount + " this: " + this.objectCount);
+        for(;;){
+            if (this.objectCount == objectCount) {
+                break;
+            }
+            if (this.objectCount > objectCount) {
+                this.objects[this.objectCount-1] = null;
+                this.objectCount--;
+            }
+            if (this.objectCount < objectCount) {
+                this.objects[this.objectCount] = new SensedObject(objects[this.objectCount].x, objects[this.objectCount].y);
+                this.objectCount++;
+            }
+        }
+        for (int c = 0; c < this.objectCount; ++c) {
             this.objects[c].posX = objects[c].x;
             this.objects[c].posY = objects[c].y;
         }
@@ -34,17 +48,18 @@ class SonarWave {
     void sonarWrite() {
         float sonarRadius;
 
-        countSonar = countSonar % ((int)frameRate * 5);
-        if(countSonar == 0){
+        countSonar = countSonar % ((int)frameRate * 9);
+        if(countSonar < 10){
             for (int c = 0; c < objectCount; ++c) {
                 objects[c].flag = 0;
             }
         }
         sonarRadius = countSonar * 4;
-        countSonar++;
         stroke(50, 100, 100);
         strokeWeight(0.8);
+        fill(255, 200);
         ellipse(userPosX, userPosY, sonarRadius, sonarRadius);
+        countSonar = countSonar + 1;
     }
 
     void drawObjects() {
@@ -72,8 +87,8 @@ class SonarWave {
         color col;
         for (int c = 0; c < objectCount; ++c) {
             col = get((int)objects[c].posX, (int)objects[c].posY);
-            if(col == 10000536 && objects[c].flag == 0){
-                objects[c].flag =1;
+            if(col == -6776680 && objects[c].flag == 0){
+                objects[c].flag = 1;
                 objects[c].prePosX = objects[c].posX;
                 objects[c].prePosY = objects[c].posY;
                 objects[c].objectTime = 0;
@@ -94,9 +109,9 @@ class SonarWave {
         float range = centerDistance(x, y);
         float angle = calculationDgrees(x, y);
         float pitch = 90 - 100*angle/360;
-        println(pitch);
         float dynamic = 127 - (range/maxDistance)*120;
         float pan = 127 - (angle/360)*127;
+        hitSounds[c].stop();
         hitSounds[c].playNote(
             0,
             0,

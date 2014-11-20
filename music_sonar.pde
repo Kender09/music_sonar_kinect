@@ -3,11 +3,12 @@ import SimpleOpenNI.*;
 
 final int canvasWidth = 640;
 final int canvasHeight = 480;
-final int setFrameRate = 60;
+final int setFrameRate = 30;
 final int maxObject = 4;
 
 // SensedObject[] objects;
 TestObject[] objects;
+int objectCount = 1;
 
 SoundCipher[] sounds;
 // SoundCipher backMusic1;
@@ -21,6 +22,8 @@ SimpleOpenNI simpleOpenNI;
 
 int modeNum = 0;
 
+int moveObNum = 0;
+
 class TestObject {
     float x, y;
 
@@ -31,7 +34,8 @@ class TestObject {
 };
 
 void setup() {
-    size(canvasWidth, canvasHeight);
+    size(canvasWidth*2, canvasHeight);
+
     colorMode(HSB, 255);
     background(255);
 
@@ -55,13 +59,13 @@ void setup() {
 
     simpleOpenNI = new SimpleOpenNI(this);
     simpleOpenNI.enableDepth();
-    lineWave = new LineWave(simpleOpenNI, sounds);
+    // lineWave = new LineWave(simpleOpenNI, sounds);
 
     objects = new TestObject[maxObject];
     objects[0] = new TestObject(100, height/2);
-    objects[1] = new TestObject(width/2, 350);
-    objects[2] = new TestObject(width/2, height/2);
-    sonarWave = new SonarWave(sounds, objects);
+    // objects[1] = new TestObject(width/4, 350);
+    // objects[2] = new TestObject(width/4, height/2);
+    sonarWave = new SonarWave(sounds, objects, objectCount, maxObject);
 
     frameRate(setFrameRate);
 }
@@ -72,27 +76,88 @@ void draw() {
 
 void update() {
     fadeToWhite();
+    stroke(0);
+    strokeWeight(1);
+    line(width/2, 0, width/2, height);
     if(modeNum == 1){
         lineWave.update();
         return;
     }
-    moveObject();
-    sonarWave.update(objects);
+    // moveObject();
+    sonarWave.update(objects, objectCount);
+    drawsetting();
 }
 
 void fadeToWhite() {
     noStroke();
     fill(255, 200);
     rectMode(CORNER);
-    rect(0, 0, width, height);
+    rect(0, 0, width/2, height);
+
+    noStroke();
+    fill(255);
+    rectMode(CORNER);
+    rect(width/2, 0, width, height);
 }
 
 void keyPressed() {
     if(key == 'c' || key == 'C'){
-        modeNum = (modeNum + 1 ) % 2;
-    }else if(key == 'e' || key == 'E'){
+        // modeNum = (modeNum + 1 ) % 2;
+        return;
+    }
+    if(key == 'z' || key == 'Z'){
+        moveObNum = (moveObNum + 1) % objectCount; 
+    }
+    if(key == 'e' || key == 'E'){
         noLoop();
         exit();
+        return;
+    }
+    if(key == '+'){
+        createObject();
+        return;
+    }
+    if(key == '-'){
+        deleteObject();
+        return;
+    }
+    // textSize(12);
+    // fill(0);
+    // text("key: " + key, width/2 + 100, 200);
+}
+
+void mousePressed() {
+    int ch_x = mouseX;
+    if(ch_x >= width/2){
+        ch_x = width/2;
+    }
+    objects[moveObNum].x = ch_x;
+    objects[moveObNum].y = mouseY;
+}
+
+void createObject() {
+    if(objectCount >= maxObject){
+        return;
+    }
+    objects[objectCount] = new TestObject(width/4, height/2);
+    objectCount++;
+}
+
+void deleteObject() {
+    if(objectCount <= 1){
+        return;
+    }
+    objects[objectCount - 1] = null;
+    objectCount--;
+    moveObNum = moveObNum % objectCount; 
+}
+
+void drawsetting() {
+    textSize(12);
+    fill(0);
+    text("moveObjectNum: " + moveObNum, width/2 + 100, 50);
+    for(int i = 0; i < objectCount; ++i){
+        text("objectNum:" + i + "  x:" + objects[i].x + " y:" + objects[i].y, width/2 + 100, 100 + 20*i); 
     }
 }
 
@@ -120,7 +185,7 @@ void moveObject() {
                 objects[c].x = objects[c].x + amount0;
             break;
             case 1:
-                if(objects[c].y > height || objects[c].y < 0){
+                if(objects[c].y > height*4/5 || objects[c].y < 0){
                     amount1 = amount1*(-1);
                 }
                 objects[c].y = objects[c].y + amount1;
@@ -130,7 +195,7 @@ void moveObject() {
                     amount2X = amount2X*(-1);
                 }
                 objects[c].x = objects[c].x + amount2X;
-                if(objects[c].y > height || objects[c].y < 0){
+                if(objects[c].y > height*4/5 || objects[c].y < 0){
                     amount2Y = amount2Y*(-1);
                 }
                 objects[c].y = objects[c].y + amount2Y;
@@ -139,14 +204,4 @@ void moveObject() {
     }
 }
 
-int bound(float x, float y) {
-    int ans = 0;
-    if(x > width || x < 0){
-        ans = 1;
-    }
-    if(y > height || y < 0){
-        ans = 2;
-    }
-    return ans; 
-}
 
