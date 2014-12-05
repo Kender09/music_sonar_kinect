@@ -11,6 +11,8 @@ TestObject[] objects;
 int objectCount = 1;
 
 SoundCipher[] sounds;
+// SoundCipher baseSound;
+SCScore baseSound;
 // SoundCipher backMusic1;
 
 LineWave lineWave;
@@ -42,8 +44,9 @@ void setup() {
    sounds = new SoundCipher[maxObject];
     for(int c = 0; c < maxObject; ++c){
         sounds[c] = new SoundCipher(this);
-    } 
-
+    }
+    // baseSound = new SoundCipher(this);
+    baseSound = new SCScore();
     // backMusic1 = new SoundCipher(this);
     // backMusic1.tempo(80);
     // backMusic1.repeat(16);
@@ -65,7 +68,7 @@ void setup() {
     objects[0] = new TestObject(100, height/2);
     // objects[1] = new TestObject(width/4, 350);
     // objects[2] = new TestObject(width/4, height/2);
-    sonarWave = new SonarWave(sounds, objects, objectCount, maxObject);
+    sonarWave = new SonarWave(sounds, baseSound, objects, objectCount, maxObject);
 
     frameRate(setFrameRate);
 }
@@ -76,9 +79,6 @@ void draw() {
 
 void update() {
     fadeToWhite();
-    stroke(0);
-    strokeWeight(1);
-    line(width/2, 0, width/2, height);
     if(modeNum == 1){
         lineWave.update();
         return;
@@ -106,7 +106,7 @@ void keyPressed() {
         return;
     }
     if(key == 'z' || key == 'Z'){
-        moveObNum = (moveObNum + 1) % objectCount; 
+        moveObNum = (moveObNum + 1) % objectCount;
     }
     if(key == 'e' || key == 'E'){
         noLoop();
@@ -149,7 +149,7 @@ void deleteObject() {
     }
     objects[objectCount - 1] = null;
     objectCount--;
-    moveObNum = moveObNum % objectCount; 
+    moveObNum = moveObNum % objectCount;
 }
 
 void drawsetting() {
@@ -157,8 +157,11 @@ void drawsetting() {
     fill(0);
     text("moveObjectNum: " + moveObNum, width/2 + 100, 50);
     for(int i = 0; i < objectCount; ++i){
-        text("objectNum:" + i + "  x:" + objects[i].x + " y:" + objects[i].y, width/2 + 100, 100 + 20*i); 
+        text("objectNum:" + i + "  x:" + objects[i].x + " y:" + objects[i].y, width/2 + 100, 100 + 20*i);
     }
+    stroke(0);
+    strokeWeight(1);
+    line(width/2, 0, width/2, height);
 }
 
 void exit() {
@@ -199,7 +202,7 @@ void moveObject() {
                     amount2Y = amount2Y*(-1);
                 }
                 objects[c].y = objects[c].y + amount2Y;
-            break;    
+            break;
         }
     }
 }

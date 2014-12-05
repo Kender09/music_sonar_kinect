@@ -8,33 +8,49 @@ class SonarWave {
     int objectCount;
 
     SoundCipher[] hitSounds;
+    SCScore baseSound;
+    int[] baseSoundFlag;
 
     SensedObject[] objects;
 
-    SonarWave(SoundCipher[] hitSounds, TestObject[] objects, int objectCount, int maxObject) {
+    ChordSet chordSet;
+
+    SonarWave(SoundCipher[] hitSounds, SCScore  baseSound,TestObject[] objects, int objectCount, int maxObject) {
         countSonar = 0;
         this.objectCount = objectCount;
         this.hitSounds = hitSounds;
+        this.baseSound = baseSound;
+        this.baseSound.tempo(60);
+        this.baseSound.repeat(0);
+        this.baseSound.pan(64);
+        // baseSound();
         this.objects = new SensedObject[maxObject];
         for (int c = 0; c < this.objectCount; ++c) {
             this.objects[c] = new SensedObject(objects[c].x, objects[c].y);
         }
+         this.baseSoundFlag = new int[maxObject];
+        for (int c = 0; c < this.objectCount; ++c) {
+            this.baseSoundFlag[c] = 0;
+        }
+        chordSet = new ChordSet();
     }
 
     void update(TestObject[] objects, int objectCount) {
-        println("test: " + objectCount + " this: " + this.objectCount);
         for(;;){
             if (this.objectCount == objectCount) {
                 break;
             }
             if (this.objectCount > objectCount) {
+                this.baseSoundFlag[this.objectCount-1] = 0;
                 this.objects[this.objectCount-1] = null;
                 this.objectCount--;
             }
             if (this.objectCount < objectCount) {
+                this.baseSoundFlag[this.objectCount] = 0;
                 this.objects[this.objectCount] = new SensedObject(objects[this.objectCount].x, objects[this.objectCount].y);
                 this.objectCount++;
             }
+            // baseSound();
         }
         for (int c = 0; c < this.objectCount; ++c) {
             this.objects[c].posX = objects[c].x;
@@ -43,6 +59,7 @@ class SonarWave {
         sonarWrite();
         drawObjects();
         emissionObject();
+        baseSound();
     }
 
     void sonarWrite() {
@@ -52,13 +69,20 @@ class SonarWave {
         if(countSonar < 10){
             for (int c = 0; c < objectCount; ++c) {
                 objects[c].flag = 0;
+                this.baseSoundFlag[c] = 0;
             }
         }
-        sonarRadius = countSonar * 4;
+        sonarRadius = countSonar * 5;
         stroke(50, 100, 100);
         strokeWeight(0.8);
         fill(255, 200);
         ellipse(userPosX, userPosY, sonarRadius, sonarRadius);
+
+        noStroke();
+        fill(255);
+        rectMode(CORNER);
+        rect(width/2, 0, width, height);
+
         countSonar = countSonar + 1;
     }
 
@@ -80,7 +104,7 @@ class SonarWave {
                 fill(col, 200, 200, transparency);
                 ellipse(objects[c].prePosX, objects[c].prePosY, 10, 10);
             }
-        } 
+        }
     }
 
     void emissionObject() {
@@ -108,9 +132,14 @@ class SonarWave {
     void collisionSound(float x, float y, int c) {
         float range = centerDistance(x, y);
         float angle = calculationDgrees(x, y);
-        float pitch = 90 - 100*angle/360;
-        float dynamic = 127 - (range/maxDistance)*120;
+        // float pitch = 90 - 100*angle/360;
+        float pitch = chordSet.getPitch(2, maxDistance-range, maxDistance);
+        float dynamic = 110 - (range/maxDistance)*20;
         float pan = 127 - (angle/360)*127;
+        float longtail = 2-this.objectCount*0.5;
+        if(longtail < 0.5){
+            longtail = 0.5;
+        }
         hitSounds[c].stop();
         hitSounds[c].playNote(
             0,
@@ -118,10 +147,28 @@ class SonarWave {
             0,
             pitch,
             dynamic,
-            100,
+            longtail,
             0.8,
             pan
         );
+    }
+
+    void baseSound(){
+        int melodic_phrase = (int)frameRate * 9 / (this.objectCount + 1);
+        for(int c = 0; c<this.objectCount; ++c){
+            if(melodic_phrase * (c+1) < countSonar  && this.baseSoundFlag[c] == 0){
+                    float longtail = 4-this.objectCount*0.2;
+                    if(longtail < 1){
+                        longtail = 1;
+                    }
+                    this.baseSound.stop();
+                    this.baseSound.empty();
+                    float[] chord = chordSet.getRandomChord();
+                    this.baseSound.addChord(0, 1, 0, chord, 100, longtail, 0.8, 64);
+                    this.baseSoundFlag[c] = 1;
+                    this.baseSound.play();
+            }
+        }
     }
 
 };
