@@ -13,10 +13,12 @@ int objectCount = 1;
 SoundCipher[] sounds;
 // SoundCipher baseSound;
 SCScore baseSound;
+SCScore nearSound;
 // SoundCipher backMusic1;
 
 LineWave lineWave;
 SonarWave sonarWave;
+MapMusic mapMusic;
 
 SimpleOpenNI simpleOpenNI;
 //kinectの取得できるピクセル(640,480)
@@ -47,6 +49,7 @@ void setup() {
     }
     // baseSound = new SoundCipher(this);
     baseSound = new SCScore();
+    nearSound = new SCScore();
     // backMusic1 = new SoundCipher(this);
     // backMusic1.tempo(80);
     // backMusic1.repeat(16);
@@ -68,7 +71,8 @@ void setup() {
     objects[0] = new TestObject(100, height/2);
     // objects[1] = new TestObject(width/4, 350);
     // objects[2] = new TestObject(width/4, height/2);
-    sonarWave = new SonarWave(sounds, baseSound, objects, objectCount, maxObject);
+    // sonarWave = new SonarWave(sounds, baseSound, objects, objectCount, maxObject);
+    mapMusic =new MapMusic(nearSound, baseSound, objects, objectCount, maxObject);
 
     frameRate(setFrameRate);
 }
@@ -84,7 +88,8 @@ void update() {
         return;
     }
     // moveObject();
-    sonarWave.update(objects, objectCount);
+    // sonarWave.update(objects, objectCount);
+    mapMusic.update(objects, objectCount);
     drawsetting();
 }
 

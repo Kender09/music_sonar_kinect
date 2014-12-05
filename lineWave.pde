@@ -22,7 +22,7 @@ class LineWave{
         for(int c = 0; c <= maxValue; ++c){
         	this.lines[c] = 0.0;
  	    }
- 	    
+
  	    this.lineSounds = lineSounds;
     }
 
@@ -56,7 +56,7 @@ class LineWave{
         getPosition[7] = width/2 - 1 + (this.countWave+1) + (640*(height/2 + 1));
         getPosition[8] = width/2 - 1 + (this.countWave+1) + (640*(height/2 - 1));
 	    for (int i = 0; i < 8; ++i) {
-			lineLengthR += this.depthValues[getPosition[i]];	    	
+			lineLengthR += this.depthValues[getPosition[i]];
 	    }
 	    lineLengthR = lineLengthR/8;
         if(lineLengthR>8000){
@@ -77,7 +77,7 @@ class LineWave{
         getPosition[7] = width/2 - 1 - (this.countWave+1) + (640*(height/2 + 1));
         getPosition[8] = width/2 - 1 - (this.countWave+1) + (640*(height/2 - 1));
 	    for (int i = 0; i < 8; ++i) {
-			lineLengthL += this.depthValues[getPosition[i]];    	
+			lineLengthL += this.depthValues[getPosition[i]];
 	    }
 	    lineLengthL = lineLengthL/8;
         if(lineLengthL>8000){
@@ -99,7 +99,7 @@ class LineWave{
  	    for(int c = 1; c <= this.maxValue; ++c){
  	    	line(c * this.congestion, height - 10, c * this.congestion, (height-10) - this.lines[c]);
  	    }
- 	    
+
     }
 
     void decrease() {

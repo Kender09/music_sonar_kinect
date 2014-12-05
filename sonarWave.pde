@@ -50,7 +50,6 @@ class SonarWave {
                 this.objects[this.objectCount] = new SensedObject(objects[this.objectCount].x, objects[this.objectCount].y);
                 this.objectCount++;
             }
-            // baseSound();
         }
         for (int c = 0; c < this.objectCount; ++c) {
             this.objects[c].posX = objects[c].x;
